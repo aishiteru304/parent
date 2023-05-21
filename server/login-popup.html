@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Popup Đăng nhập</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script>
+        const SERVER_URL = 'http://localhost:8080'
+        function sendInfoToOpener(id, username, token) {
+            window.opener.postMessage({ id, username, token }, '*');
+            window.close();
+        }
+
+        function handleLogin(event) {
+            event.preventDefault(); // Ngăn chặn việc submit form
+            const form = event.target;
+            const username = form.username.value;
+            const password = form.password.value;
+
+            axios.post(`${SERVER_URL}/login`, { username, password })
+                .then((response) => {
+                    const { token } = response.data;
+                    // sendTokenToOpener(token);
+                    axios.get(`${SERVER_URL}/user-info`, { headers: { Authorization: `Bearer ${token}` } })
+                        .then(res => {
+                            console.log(token)
+                            sendInfoToOpener(res.data.info.id, res.data.info.username, token);
+                        })
+                        .catch(err => {
+                            console.log('Lỗi xác thực', err);
+                        });
+                })
+                .catch(err => {
+                    alert('Tên đăng nhập hoặc mật khẩu không đúng')
+                    console.log('Lỗi đăng nhập', err);
+                });
+        }
+    </script>
+</head>
+
+<body>
+    <h1>Đăng nhập</h1>
+    <!-- Đoạn mã form đăng nhập -->
+    <form onsubmit="handleLogin(event)">
+        <input type="text" name="username" placeholder="Tên đăng nhập" required /><br />
+        <input type="password" name="password" placeholder="Mật khẩu" required /><br />
+        <button type="submit">Đăng nhập</button>
+    </form>
+</body>
+
+</html>
